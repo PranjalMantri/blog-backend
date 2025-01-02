@@ -1,7 +1,66 @@
+import { Users } from "../models/user.model.js";
+import { userSchema } from "../validation/user.validation.js";
+
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await Users.findById(userId);
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    user.save({ validateBeforeSave: true });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Register User
 const registerUser = async (req, res) => {
-  // take username, image, password, and avatar
-  res.send("Hello World");
+  // take username, email, password, and avatar
+  // validate data
+  const validatedData = userSchema.safeParse(req.body);
+
+  if (!validatedData.success) {
+    return res.status(403).json({
+      success: false,
+      message: validatedData.error,
+    });
+  }
+
+  const { username, email, password } = validatedData.data;
+
+  // check if user exists or not
+  const existingUser = await Users.findOne({ email });
+
+  if (existingUser) {
+    return res.status(409).json({
+      message: "User with same email address already exists",
+    });
+  }
+
+  let userAvatar;
+  if (req.file) {
+    userAvatar = req.file.avatar;
+  }
+
+  // create user
+  const user = await Users.create({
+    username,
+    email,
+    password,
+    avatar: userAvatar
+      ? { url: userAvatar.url, public_id: userAvatar.public_id }
+      : { url: "", public_id: "" },
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly registered user",
+    data: user,
+  });
 };
 
 // Login user

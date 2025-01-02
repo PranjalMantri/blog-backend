@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema(
         ref: "Blog",
       },
     ],
+    refreshToken: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
@@ -50,6 +53,18 @@ userSchema.pre("save", async function (next) {
 
 userSchema.methods.comparePasswords = async function (password) {
   return await compare(password, this.password);
+};
+
+userSchema.methods.generateAccessToken = async function () {
+  return jwt.sign({ _id: this._id }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRATION,
+  });
+};
+
+userSchema.methods.generateRefreshToken = async function () {
+  return jwt.sign({ _id: this._id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRATION,
+  });
 };
 
 export const Users = mongoose.model("User", userSchema);

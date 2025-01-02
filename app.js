@@ -1,9 +1,12 @@
-import express from "express";
+import express, { json, urlencoded } from "express";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 import userRouter from "./routes/user.route.js";
 
