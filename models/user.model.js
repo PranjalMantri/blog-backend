@@ -34,4 +34,4 @@ userSchema.methods.comparePasswords = async function (password) {
   return await compare(password, this.password);
 };
 
-export const User = mongoose.model("User", userSchema);
+export const Users = mongoose.model("User", userSchema);
