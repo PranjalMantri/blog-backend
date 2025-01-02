@@ -1,11 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const app = express();
 
-app.get("/", (req, res) => {
-  res.send("Hello World");
-});
+import userRouter from "./routes/user.route.js";
+
+app.use("/api/v1/users", userRouter);
 
 export default app;
