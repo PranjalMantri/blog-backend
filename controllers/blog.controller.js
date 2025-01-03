@@ -172,7 +172,38 @@ const updateBlogImage = async (req, res) => {
 };
 
 const updateBlogTags = async (req, res) => {
-  // update the blog tags
+  // get blog tags and update them
+  const { tags } = req.body;
+  const blogId = req.params.blogId.trim();
+
+  if (!tags || tags.length < 1) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Tags are required" });
+  }
+
+  // valdiate user
+  const user = await Users.findById(req.userId);
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "User not found" });
+  }
+
+  // get blog
+  const blog = await Blogs.findById(blogId);
+
+  if (!blog) {
+    return res.status(400).json({ success: false, message: "Blog not found" });
+  }
+
+  blog.tags = tags;
+  await blog.save({ validateBeforeSave: true });
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly updated blog tags",
+    data: blog,
+  });
 };
 
 // get blog by id

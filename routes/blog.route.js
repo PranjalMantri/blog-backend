@@ -3,6 +3,7 @@ import {
   createBlog,
   updateBlog,
   updateBlogImage,
+  updateBlogTags,
 } from "../controllers/blog.controller.js";
 import verifyJWT from "../middlewares/auth.js";
 import upload from "../middlewares/multer.middlerware.js";
@@ -16,5 +17,6 @@ router.route("/:blogId").patch(updateBlog);
 router
   .route("/:blogId/image")
   .put(upload.single("coverImage"), updateBlogImage);
+router.route("/:blogId/tags").patch(updateBlogTags);
 
 export default router;
