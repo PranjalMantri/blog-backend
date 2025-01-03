@@ -362,6 +362,8 @@ const addToFavourites = async (req, res) => {
   });
 };
 
+// delete user
+
 export {
   registerUser,
   loginUser,
