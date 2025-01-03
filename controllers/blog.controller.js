@@ -252,25 +252,145 @@ const getBlogByAuthor = async (req, res) => {
 // list all blogs
 const getAllBlogs = async (req, res) => {
   // get all blogs by all users
+  const blogs = await Blogs.find({});
+
+  if (!blogs || blogs.length < 1) {
+    return res.status(200).json({
+      success: false,
+      message: "There are no blogs to be fetched",
+      data: blogs,
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly fetched all the blogs",
+    data: blogs,
+  });
 };
 
 const getAllPublishedBlogs = async (req, res) => {
-  // get all published blogs by all users
+  try {
+    const blogs = await Blogs.find({ published: true });
+
+    if (!blogs || blogs.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No published blogs available",
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully fetched all published blogs",
+      data: blogs,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching published blogs",
+      error: error.message,
+    });
+  }
 };
 
-// search blog (by title and tags)
 const getBlogByQuery = async (req, res) => {
-  // get the search query and return a list of relevant blogs
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required",
+      });
+    }
+
+    const blogs = await Blogs.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { tags: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    if (!blogs || blogs.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No blogs match the search query",
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully fetched blogs matching the query",
+      data: blogs,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while searching for blogs",
+      error: error.message,
+    });
+  }
 };
 
-// publish/unpublish a blog
 const toggleBlogPublish = async (req, res) => {
-  // publish/unpublish a blog
+  try {
+    const { blogId } = req.params;
+
+    const blog = await Blogs.findById(blogId);
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    blog.published = !blog.published;
+    await blog.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Blog has been successfully ${
+        blog.published ? "published" : "unpublished"
+      }`,
+      data: blog,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while toggling blog publish status",
+      error: error.message,
+    });
+  }
 };
 
-// delete a blog
 const deleteBlog = async (req, res) => {
-  // delete the blog
+  try {
+    const { blogId } = req.params;
+
+    const blog = await Blogs.findOneAndDelete(blogId);
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Blog has been successfully deleted",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while deleting the blog",
+      error: error.message,
+    });
+  }
 };
 
 export {
