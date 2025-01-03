@@ -1,5 +1,6 @@
 import { Users } from "../models/user.model.js";
 import { userSchema } from "../validation/user.validation.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -43,7 +44,22 @@ const registerUser = async (req, res) => {
 
   let userAvatar;
   if (req.file) {
-    userAvatar = req.file.avatar;
+    try {
+      userAvatar = await uploadOnCloudinary(req.file.path);
+
+      if (!userAvatar) {
+        return res.status(500).json({
+          success: false,
+          message:
+            "Something went wrong while uploading an image on cloudinary",
+        });
+      }
+    } catch (error) {
+      return res.status(403).json({
+        success: false,
+        messsage: "Failed to upload image on cloudinary",
+      });
+    }
   }
 
   // create user
