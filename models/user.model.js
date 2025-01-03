@@ -1,5 +1,6 @@
 import { compare, genSalt, hash } from "bcrypt";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema(
   {

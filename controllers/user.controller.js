@@ -1,13 +1,16 @@
 import { Users } from "../models/user.model.js";
-import { userSchema } from "../validation/user.validation.js";
+import {
+  registerUserSchema,
+  loginUserSchema,
+} from "../validation/user.validation.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await Users.findById(userId);
 
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
     user.save({ validateBeforeSave: true });
@@ -22,12 +25,14 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = async (req, res) => {
   // take username, email, password, and avatar
   // validate data
-  const validatedData = userSchema.safeParse(req.body);
+  const validatedData = registerUserSchema.safeParse(req.body);
 
   if (!validatedData.success) {
     return res.status(403).json({
       success: false,
-      message: validatedData.error,
+      message: validatedData.error.errors
+        .map((error) => error.message)
+        .join(". "),
     });
   }
 
@@ -42,6 +47,7 @@ const registerUser = async (req, res) => {
     });
   }
 
+  // If user provides a file, upload it to cloudinary
   let userAvatar;
   if (req.file) {
     try {
@@ -79,9 +85,65 @@ const registerUser = async (req, res) => {
   });
 };
 
-// Login user
 const loginUser = async (req, res) => {
   // take email, password
+  const validatedData = loginUserSchema.safeParse(req.body);
+
+  if (!validatedData.success) {
+    return res.status(500).json({
+      success: false,
+      message: validatedData.error.errors
+        .map((error) => error.message)
+        .join(", "),
+    });
+  }
+
+  const { email, password } = validatedData.data;
+
+  // check if user exists
+  const existingUser = await Users.findOne({ email });
+
+  if (!existingUser) {
+    return res
+      .status(400)
+      .json({ success: false, message: "User does not exist" });
+  }
+
+  // check if password is correct
+  const isPasswordCorrect = await existingUser.comparePasswords(password);
+
+  if (!isPasswordCorrect) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Incorrect Password" });
+  }
+
+  // create accesToken and refreshTokens
+  // generateAccessAndRefreshToken - generates both tokens and stores the refresh token in db
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    existingUser._id
+  );
+
+  // get the details of logged in user, except for the password and refreshToken
+  const loggedInUser = await Users.findById(existingUser._id).select(
+    "-password -refreshToken"
+  );
+
+  // Set the tokens as cookies
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("access-token", accessToken, cookieOptions)
+    .cookie("refresh-token", refreshToken, cookieOptions)
+    .json({
+      success: true,
+      message: "User logged in successfully",
+      data: { user: loggedInUser, accessToken, refreshToken },
+    });
 };
 
 // logout user
@@ -124,4 +186,15 @@ const getFavourite = async (req, res) => {
   // retreives all the favourite blogs
 };
 
-export { registerUser };
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getUserBlogs,
+  getUserHistory,
+  changePassword,
+  updateUserAvatar,
+  getUserById,
+  addToFavourites,
+  getFavourite,
+};
