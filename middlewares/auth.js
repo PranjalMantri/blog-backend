@@ -32,6 +32,7 @@ const verifyJWT = async (req, res, next) => {
     next();
   } catch (error) {
     console.log("Something went wrong while verifying user", error.message);
+    throw new error();
   }
 };
 

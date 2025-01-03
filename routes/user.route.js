@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getUserById,
+  getUserHistory,
   loginUser,
   logoutUser,
   registerUser,
@@ -14,5 +15,6 @@ router.route("/register").post(upload.single("avatar"), registerUser);
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/:userId").get(verifyJWT, getUserById);
+router.route("/:userId/history").get(verifyJWT, getUserHistory);
 
 export default router;

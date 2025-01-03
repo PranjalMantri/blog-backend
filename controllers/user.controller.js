@@ -192,14 +192,27 @@ const getUserById = async (req, res) => {
   });
 };
 
-// user's blogs
-const getUserBlogs = async (req, res) => {
-  // take userId and get all the blogs that have the userId as authorId
-};
-
-// user's read history
 const getUserHistory = async (req, res) => {
   // when user clicks on a blog, it is considered as read and the blogId will be added to the history array
+  const user = await Users.findById(req.userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (user.history.length < 1) {
+    return res.status(200).json({
+      success: true,
+      message: "User has not read any blogs",
+      data: [],
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly fetched user reading history",
+    data: user.history,
+  });
 };
 
 // change password
@@ -226,7 +239,6 @@ export {
   registerUser,
   loginUser,
   logoutUser,
-  getUserBlogs,
   getUserHistory,
   changePassword,
   updateUserAvatar,
