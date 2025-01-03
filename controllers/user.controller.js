@@ -149,6 +149,28 @@ const loginUser = async (req, res) => {
 // logout user
 const logoutUser = async (req, res) => {
   // user will give nothing, take user details and delete the cookies?
+  const user = await Users.findByIdAndUpdate(
+    req.userId,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json({ success: false, message: "User logged out" });
 };
 
 // user's blogs
