@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createBlog,
+  getBlogByAuthor,
   getBlogById,
   updateBlog,
   updateBlogImage,
@@ -14,6 +15,7 @@ const router = Router();
 router.use(verifyJWT);
 
 router.route("/").post(upload.single("coverImage"), createBlog);
+router.route("/author").get(getBlogByAuthor);
 router.route("/:blogId").patch(updateBlog);
 router.route("/:blogId").get(getBlogById);
 router

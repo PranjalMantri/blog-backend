@@ -5,6 +5,7 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 // create a blog
 const createBlog = async (req, res) => {
@@ -227,6 +228,25 @@ const getBlogById = async (req, res) => {
 
 const getBlogByAuthor = async (req, res) => {
   // get author id and search for all the blogs where that user is blof
+  const userId = req.userId;
+
+  const blogs = await Blogs.find({
+    author: new mongoose.Types.ObjectId(userId),
+  });
+
+  if (!blogs || blogs.length < 1) {
+    return res.status(200).json({
+      success: true,
+      message: "User has written no blogs",
+      data: blogs,
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly fetched user blogs",
+    data: blogs,
+  });
 };
 
 // list all blogs
