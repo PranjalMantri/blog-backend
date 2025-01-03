@@ -4,6 +4,7 @@ import {
   loginUserSchema,
 } from "../validation/user.validation.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -173,6 +174,24 @@ const logoutUser = async (req, res) => {
     .json({ success: false, message: "User logged out" });
 };
 
+// get user
+const getUserById = async (req, res) => {
+  // get user details by id
+  const userId = req.params.userId.trim();
+
+  const user = await Users.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly fetched user details",
+    data: user,
+  });
+};
+
 // user's blogs
 const getUserBlogs = async (req, res) => {
   // take userId and get all the blogs that have the userId as authorId
@@ -191,11 +210,6 @@ const changePassword = async (req, res) => {
 // update profile picture
 const updateUserAvatar = async (req, res) => {
   // take new image and replace it with old image, also delete old image from cloudinary
-};
-
-// get user
-const getUserById = async (req, res) => {
-  // get user details by id
 };
 
 // add to favourite

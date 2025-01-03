@@ -31,7 +31,7 @@ const verifyJWT = async (req, res, next) => {
     req.userId = user._id;
     next();
   } catch (error) {
-    console.log("Something went wrong while verifying user");
+    console.log("Something went wrong while verifying user", error.message);
   }
 };
 
