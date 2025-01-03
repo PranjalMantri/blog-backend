@@ -1,6 +1,8 @@
 import { Router } from "express";
 import {
+  addToFavourites,
   changePassword,
+  getFavourites,
   getUserById,
   getUserHistory,
   loginUser,
@@ -23,6 +25,8 @@ router.use(verifyJWT);
 // Static protected routes (must come before dynamic routes)
 router.route("/logout").post(logoutUser);
 router.route("/update-avatar").patch(upload.single("avatar"), updateUserAvatar);
+router.route("/favourite/:blogId").post(addToFavourites);
+router.route("/favourite").get(getFavourites);
 
 // Dynamic protected routes
 router.route("/:userId").get(getUserById);

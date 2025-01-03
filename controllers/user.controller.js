@@ -8,7 +8,6 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
-import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -319,14 +318,48 @@ const updateUserAvatar = async (req, res) => {
   });
 };
 
+const getFavourites = async (req, res) => {
+  // retreives all the favourite blogs
+  const user = await Users.findById(req.userId);
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "User not found" });
+  }
+
+  if (user.favourite.length < 1) {
+    return res.status(200).json({
+      success: true,
+      messsage: "User has no favourite blog",
+      data: [],
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfully fetched all favourite blog of the user",
+    data: data.favourite,
+  });
+};
+
 // add to favourite
 const addToFavourites = async (req, res) => {
   // clicking bookmark button will take the blog id and add it to the favourites array
-};
+  const blogId = req.params.blogId;
 
-// get favourites
-const getFavourite = async (req, res) => {
-  // retreives all the favourite blogs
+  const user = await Users.findById(req.user);
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "User not found" });
+  }
+
+  user.favourite.push(blogId);
+  await user.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly added the blog to favourites",
+    data: user.favourite,
+  });
 };
 
 export {
@@ -338,5 +371,5 @@ export {
   updateUserAvatar,
   getUserById,
   addToFavourites,
-  getFavourite,
+  getFavourites,
 };
