@@ -15,4 +15,18 @@ const loginUserSchema = z
   })
   .passthrough();
 
-export { registerUserSchema, loginUserSchema };
+const changePasswordSchema = z
+  .object({
+    oldPassword: z
+      .string()
+      .min(6, "Old password should atleast be 6 characters"),
+    newPassword: z
+      .string()
+      .min(6, "New Password should atleast be 6 characters"),
+  })
+  .refine((data) => data.oldPassword !== data.newPassword, {
+    message: "New Password should not be the same as old password",
+    path: ["newPassword"],
+  });
+
+export { registerUserSchema, loginUserSchema, changePasswordSchema };

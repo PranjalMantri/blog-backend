@@ -2,6 +2,7 @@ import { Users } from "../models/user.model.js";
 import {
   registerUserSchema,
   loginUserSchema,
+  changePasswordSchema,
 } from "../validation/user.validation.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
@@ -55,6 +56,8 @@ const registerUser = async (req, res) => {
       userAvatar = await uploadOnCloudinary(req.file.path);
 
       if (!userAvatar) {
+        console.log("Did not upload file on cloudinary");
+
         return res.status(500).json({
           success: false,
           message:
@@ -218,6 +221,46 @@ const getUserHistory = async (req, res) => {
 // change password
 const changePassword = async (req, res) => {
   // take old password, check if it meets the current passowrd, change and hash it
+  const validatedData = changePasswordSchema.safeParse(req.body);
+
+  if (!validatedData.success) {
+    return res.status(400).json({
+      success: false,
+      message: validatedData.error.errors
+        .map((error) => error.message)
+        .join(". "),
+    });
+  }
+
+  const { oldPassword, newPassword } = validatedData.data;
+
+  const user = await Users.findById(req.userId);
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "User not found" });
+  }
+
+  const isOldPasswordCorrect = await user.comparePasswords(oldPassword);
+
+  if (!isOldPasswordCorrect) {
+    return res.status(400).json({
+      success: false,
+      message: "Old password is incorrect",
+    });
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: true });
+
+  const updatedUser = await Users.findById(req.userId).select(
+    "-password -refreshToken"
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly updated user's password",
+    data: updatedUser,
+  });
 };
 
 // update profile picture
