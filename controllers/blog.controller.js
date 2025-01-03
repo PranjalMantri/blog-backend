@@ -70,9 +70,46 @@ const createBlog = async (req, res) => {
     .status(200)
     .json({ success: true, message: "Successfuly created a blog", data: blog });
 };
+
 // update blog details
 const updateBlog = async (req, res) => {
   // get blog details and update it
+  const validatedData = createBlogSchema.safeParse(req.body);
+  const blogId = req.params.blogId.trim();
+
+  if (!validatedData.success) {
+    return res.status(404).json({
+      success: false,
+      message: validatedData.error.errors
+        .map((error) => error.messsage)
+        .join(". "),
+    });
+  }
+
+  const { title, content } = validatedData.data;
+
+  // valdiate user
+  const user = await Users.findById(req.userId);
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "User not found" });
+  }
+
+  const blog = await Blogs.findById(blogId);
+
+  if (!blog) {
+    return res.status(400).json({ success: false, message: "Blog not found" });
+  }
+
+  blog.title = title;
+  blog.content = content;
+  await blog.save({ validateBeforeSave: true });
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly updated blog data",
+    data: blog,
+  });
 };
 
 // update blog image
