@@ -1,7 +1,10 @@
 import { createBlogSchema } from "../validation/blog.validation.js";
 import { Users } from "../models/user.model.js";
 import { Blogs } from "../models/blog.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 // create a blog
 const createBlog = async (req, res) => {
@@ -114,7 +117,58 @@ const updateBlog = async (req, res) => {
 
 // update blog image
 const updateBlogImage = async (req, res) => {
-  // get blog coverImage and update it
+  // get new file
+  if (!req.file) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Cover Image is required" });
+  }
+
+  const blogId = req.params.blogId.trim();
+
+  const blog = await Blogs.findById(blogId);
+
+  if (!blog) {
+    return res.status(400).json({ success: false, message: "Blog not found" });
+  }
+
+  console.log(blog);
+
+  const oldblogImage = blog.blogImage;
+
+  let blogImage = req.file;
+  blogImage = await uploadOnCloudinary(blogImage.path);
+
+  if (!blogImage) {
+    return res.status(400).json({
+      success: false,
+      message: "Something went wrong while updating the cover Image",
+    });
+  }
+
+  blog.blogImage = {
+    url: blogImage.url,
+    public_id: blogImage.public_id,
+  };
+
+  await blog.save();
+
+  console.log(oldblogImage);
+  const deletedblogImage = await deleteFromCloudinary(oldblogImage.public_id);
+
+  if (!deletedblogImage) {
+    return res.status(500).json({
+      success: true,
+      message: "Something went wrong while deleting the old cover image",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly updated user avatar",
+    data: blog,
+  });
+  // upload new file, delete old file
 };
 
 const updateBlogTags = async (req, res) => {
