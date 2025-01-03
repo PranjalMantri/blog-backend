@@ -209,6 +209,20 @@ const updateBlogTags = async (req, res) => {
 // get blog by id
 const getBlogById = async (req, res) => {
   //get blog id and fetch details
+  const blogId = req.params.blogId.trim();
+
+  // get blog
+  const blog = await Blogs.findById(blogId);
+
+  if (!blog) {
+    return res.status(400).json({ success: false, message: "Blog not found" });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly fetched the blog with given Id",
+    data: blog,
+  });
 };
 
 const getBlogByAuthor = async (req, res) => {

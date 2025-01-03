@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createBlog,
+  getBlogById,
   updateBlog,
   updateBlogImage,
   updateBlogTags,
@@ -14,6 +15,7 @@ router.use(verifyJWT);
 
 router.route("/").post(upload.single("coverImage"), createBlog);
 router.route("/:blogId").patch(updateBlog);
+router.route("/:blogId").get(getBlogById);
 router
   .route("/:blogId/image")
   .put(upload.single("coverImage"), updateBlogImage);
