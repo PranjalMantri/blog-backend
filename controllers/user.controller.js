@@ -4,7 +4,10 @@ import {
   loginUserSchema,
   changePasswordSchema,
 } from "../validation/user.validation.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -265,7 +268,55 @@ const changePassword = async (req, res) => {
 
 // update profile picture
 const updateUserAvatar = async (req, res) => {
+  console.log("Update user avatar was called");
   // take new image and replace it with old image, also delete old image from cloudinary
+  const user = await Users.findById(req.userId).select(
+    "-password -refreshToken"
+  );
+
+  const oldAvatar = user.avatar;
+
+  if (oldAvatar.public_id) {
+    console.log(oldAvatar.public_id);
+    const deleteOldAvatar = await deleteFromCloudinary(oldAvatar.public_id);
+    console.log(deleteOldAvatar);
+  } else {
+    console.log("There was no image to be deleted to begin with");
+  }
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (!req.file) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Avatar is required" });
+  }
+
+  let newAvatar = req.file;
+
+  newAvatar = await uploadOnCloudinary(newAvatar.path);
+
+  if (!newAvatar) {
+    return res.status(400).json({
+      success: false,
+      message: "Something went wrong while updating the user avatar",
+    });
+  }
+
+  user.avatar = {
+    url: newAvatar.url,
+    public_id: newAvatar.public_id,
+  };
+
+  await user.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly updated user avatar",
+    data: user,
+  });
 };
 
 // add to favourite
