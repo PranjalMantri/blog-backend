@@ -8,6 +8,7 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -177,6 +178,71 @@ const logoutUser = async (req, res) => {
     .clearCookie("accessToken", cookieOptions)
     .clearCookie("refreshToken", cookieOptions)
     .json({ success: false, message: "User logged out" });
+};
+
+const refreshToken = async (req, res) => {
+  // take the current refresh token from cookies or body
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Refresh token is required" });
+  }
+  // get user from the id
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await Users.findById(decodedToken._id);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // check if the refresh token is the same as the one in the db
+    if (incomingRefreshToken !== user.refreshToken) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid refresh Token" });
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshToken(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json({
+        sucess: true,
+        message: "Access token refreshed",
+        data: { accessToken, refreshToken: newRefreshToken },
+      });
+  } catch (error) {
+    // Handle token verification errors specifically
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ success: false, message: "Refresh token expired" });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: error.message || "Invalid refresh token",
+    });
+  }
 };
 
 // get user
@@ -384,6 +450,7 @@ export {
   registerUser,
   loginUser,
   logoutUser,
+  refreshToken,
   getUserHistory,
   changePassword,
   updateUserAvatar,
