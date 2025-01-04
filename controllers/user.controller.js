@@ -363,6 +363,22 @@ const addToFavourites = async (req, res) => {
 };
 
 // delete user
+const deleteUser = async (req, res) => {
+  const user = await Users.findOneAndDelete({ _id: req.userId });
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: "Something went wrong while deleting the user",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Successfuly deleted the user",
+    data: null,
+  });
+};
 
 export {
   registerUser,
@@ -374,4 +390,5 @@ export {
   getUserById,
   addToFavourites,
   getFavourites,
+  deleteUser,
 };
